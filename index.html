@@ -235,30 +235,14 @@
 
     <!-- JavaScript Event Listeners & Functions -->
     <script>
-        // Yahan apna Google Apps Script Web App URL dalein jo aap Google Sheets se banayenge
-        const API_URL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
+        // Google Apps Script Web App URL
+        const API_URL = "https://script.google.com/macros/s/AKfycbvOEVx60AZPYUkHq56nzU5BKIPOSun02KxhtpOoMpAlVa7vKfMcXDV7-hVAYhB0qn2c/exec";
 
         let allProducts = [];
 
         async function fetchProductsFromCloud() {
             const loading = document.getElementById('loadingIndicator');
             const grid = document.getElementById('productGrid');
-            
-            if(API_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
-                // Fallback demo data agar URL na ho
-                allProducts = [
-                    {
-                        id: 1,
-                        title: "Leather uper (1006)",
-                        price: "Rs. 4,800",
-                        desc: "Article Code: 1006\nUpper Material: Premium Quality Genuine Leather\nSole: High-Grade Polyurethane (PU) Flexible & Anti-Slip Sole\nAvailable Sizes: 40, 41, 42, 43, 44, 45\nComfort Level: Extra Soft Cushioning with Orthopedic Support",
-                        img: "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?auto=format&fit=crop&w=600&q=80"
-                    }
-                ];
-                if(loading) loading.style.display = 'none';
-                renderProducts();
-                return;
-            }
 
             try {
                 const response = await fetch(API_URL);
@@ -274,11 +258,6 @@
         }
 
         async function saveProductToCloud(productData, isEdit = false) {
-            if(API_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
-                alert("Baraye meharbani pehle Google Apps Script ka URL code mein set karein!");
-                return false;
-            }
-
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
@@ -293,7 +272,6 @@
         }
 
         async function deleteProductFromCloud(id) {
-            if(API_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") return false;
             try {
                 const response = await fetch(API_URL + "?action=delete&id=" + id, {
                     method: 'GET'
@@ -438,7 +416,7 @@
         async function deleteProduct(id) {
             if(confirm('Kya aap waqai is post ko delete karna chahte hain?')) {
                 const success = await deleteProductFromCloud(id);
-                if(success || API_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+                if(success) {
                     allProducts = allProducts.filter(p => String(p.id) !== String(id));
                     renderProducts();
                     renderAdminList();
@@ -608,7 +586,7 @@
 
                         const success = await saveProductToCloud(productData, !!editId);
 
-                        if(success || API_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+                        if(success) {
                             if(editId) {
                                 allProducts = allProducts.map(p => String(p.id) === String(editId) ? productData : p);
                                 alert('Post kamyabi se update ho gayi hai!');

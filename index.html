@@ -119,6 +119,11 @@
             <span class="text-xs bg-amber-100 text-amber-900 px-3 py-1 rounded-full font-medium">Factory Direct Prices</span>
         </div>
 
+        <div id="loadingIndicator" class="text-center py-10">
+            <i class="fa-solid fa-spinner fa-spin text-3xl text-amber-900 mb-2"></i>
+            <p class="text-xs text-gray-500">Loading products from cloud...</p>
+        </div>
+
         <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             <!-- Dynamic products load here -->
         </div>
@@ -230,33 +235,72 @@
 
     <!-- JavaScript Event Listeners & Functions -->
     <script>
-        const defaultProducts = [
-            {
-                id: 1,
-                title: "Leather uper (1006)",
-                price: "Rs. 4,800",
-                desc: "Article Code: 1006\nUpper Material: Premium Quality Genuine Leather\nSole: High-Grade Polyurethane (PU) Flexible & Anti-Slip Sole\nAvailable Sizes: 40, 41, 42, 43, 44, 45\nComfort Level: Extra Soft Cushioning with Orthopedic Support",
-                img: "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?auto=format&fit=crop&w=600&q=80"
-            }
-        ];
+        // Yahan apna Google Apps Script Web App URL dalein jo aap Google Sheets se banayenge
+        const API_URL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
 
-        function getStoredProducts() {
+        let allProducts = [];
+
+        async function fetchProductsFromCloud() {
+            const loading = document.getElementById('loadingIndicator');
+            const grid = document.getElementById('productGrid');
+            
+            if(API_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+                // Fallback demo data agar URL na ho
+                allProducts = [
+                    {
+                        id: 1,
+                        title: "Leather uper (1006)",
+                        price: "Rs. 4,800",
+                        desc: "Article Code: 1006\nUpper Material: Premium Quality Genuine Leather\nSole: High-Grade Polyurethane (PU) Flexible & Anti-Slip Sole\nAvailable Sizes: 40, 41, 42, 43, 44, 45\nComfort Level: Extra Soft Cushioning with Orthopedic Support",
+                        img: "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?auto=format&fit=crop&w=600&q=80"
+                    }
+                ];
+                if(loading) loading.style.display = 'none';
+                renderProducts();
+                return;
+            }
+
             try {
-                const localData = localStorage.getItem('royalStepsProducts');
-                if(!localData) return defaultProducts;
-                const parsed = JSON.parse(localData);
-                return Array.isArray(parsed) && parsed.length > 0 ? parsed : defaultProducts;
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                allProducts = Array.isArray(data) ? data : [];
             } catch (e) {
-                return defaultProducts;
+                console.error("Error fetching data", e);
+                allProducts = [];
+            } finally {
+                if(loading) loading.style.display = 'none';
+                renderProducts();
             }
         }
 
-        function saveStoredProducts(products) {
+        async function saveProductToCloud(productData, isEdit = false) {
+            if(API_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+                alert("Baraye meharbani pehle Google Apps Script ka URL code mein set karein!");
+                return false;
+            }
+
             try {
-                localStorage.setItem('royalStepsProducts', JSON.stringify(products));
-                return true;
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(productData)
+                });
+                const res = await response.json();
+                return res.success;
             } catch (e) {
-                alert('Storage full ho gayi hai.');
+                alert('Cloud par data save karne mein masla hua.');
+                return false;
+            }
+        }
+
+        async function deleteProductFromCloud(id) {
+            if(API_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") return false;
+            try {
+                const response = await fetch(API_URL + "?action=delete&id=" + id, {
+                    method: 'GET'
+                });
+                const res = await response.json();
+                return res.success;
+            } catch (e) {
                 return false;
             }
         }
@@ -277,7 +321,6 @@
             alert('Password kamyabi se tabdeel ho gaya hai!');
         }
 
-        // Upload image to ImgBB Cloud for unlimited safe hosting
         async function uploadImageToCloud(file) {
             const formData = new FormData();
             formData.append('image', file);
@@ -301,15 +344,14 @@
 
         function renderProducts() {
             const grid = document.getElementById('productGrid');
-            const products = getStoredProducts();
             grid.innerHTML = '';
 
-            if(!products || products.length === 0) {
+            if(!allProducts || allProducts.length === 0) {
                 grid.innerHTML = '<p class="text-xs text-gray-500 col-span-full text-center py-4">No products found.</p>';
                 return;
             }
 
-            products.forEach(p => {
+            allProducts.forEach(p => {
                 let displayImg = p.img ? p.img : 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=600&q=80';
                 let displayPrice = p.price ? p.price : 'Contact for Price';
                 let firstLine = p.desc ? p.desc.split('\n')[0] : '';
@@ -326,7 +368,7 @@
                         <p class="text-xs text-gray-500 mb-3">${firstLine}</p>
                         <div class="mt-auto flex items-center justify-between pt-3 border-t border-gray-100">
                             <span class="text-amber-700 font-bold text-sm">${displayPrice}</span>
-                            <button onclick="openDetailsById(${p.id})" class="bg-amber-900 text-white text-xs px-3 py-1.5 rounded hover:bg-amber-800 transition">
+                            <button onclick="openDetailsById('${p.id}')" class="bg-amber-900 text-white text-xs px-3 py-1.5 rounded hover:bg-amber-800 transition">
                                 View Details
                             </button>
                         </div>
@@ -338,15 +380,14 @@
 
         function renderAdminList() {
             const listContainer = document.getElementById('adminPostsList');
-            const products = getStoredProducts();
             listContainer.innerHTML = '';
 
-            if(!products || products.length === 0) {
+            if(!allProducts || allProducts.length === 0) {
                 listContainer.innerHTML = '<p class="text-xs text-gray-500">No posts available.</p>';
                 return;
             }
 
-            products.forEach(p => {
+            allProducts.forEach(p => {
                 const item = document.createElement('div');
                 item.className = 'flex items-center justify-between bg-gray-50 p-2.5 rounded-lg border border-gray-200 text-xs';
                 item.innerHTML = `
@@ -355,10 +396,10 @@
                         <span class="text-amber-800 font-semibold">${p.price || 'No Price'}</span>
                     </div>
                     <div class="flex gap-1.5">
-                        <button onclick="editProduct(${p.id})" class="bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1 rounded font-medium transition">
+                        <button onclick="editProduct('${p.id}')" class="bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1 rounded font-medium transition">
                             <i class="fa-solid fa-pen-to-square mr-1"></i> Edit
                         </button>
-                        <button onclick="deleteProduct(${p.id})" class="bg-red-600 hover:bg-red-700 text-white px-2.5 py-1 rounded font-medium transition">
+                        <button onclick="deleteProduct('${p.id}')" class="bg-red-600 hover:bg-red-700 text-white px-2.5 py-1 rounded font-medium transition">
                             <i class="fa-solid fa-trash mr-1"></i> Delete
                         </button>
                     </div>
@@ -368,8 +409,7 @@
         }
 
         function editProduct(id) {
-            const products = getStoredProducts();
-            const p = products.find(item => item.id === id);
+            const p = allProducts.find(item => String(item.id) === String(id));
             if(!p) return;
 
             document.getElementById('editPostId').value = p.id;
@@ -395,22 +435,23 @@
             document.getElementById('cancelEditBtn').classList.add('hidden');
         }
 
-        function deleteProduct(id) {
+        async function deleteProduct(id) {
             if(confirm('Kya aap waqai is post ko delete karna chahte hain?')) {
-                let products = getStoredProducts();
-                products = products.filter(p => p.id !== id);
-                let success = saveStoredProducts(products);
-                if(success) {
+                const success = await deleteProductFromCloud(id);
+                if(success || API_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+                    allProducts = allProducts.filter(p => String(p.id) !== String(id));
                     renderProducts();
                     renderAdminList();
                     resetAdminForm();
                     alert('Post kamyabi se delete ho gayi hai!');
+                } else {
+                    alert('Delete karne mein masla hua.');
                 }
             }
         }
 
         document.addEventListener("DOMContentLoaded", function() {
-            renderProducts();
+            fetchProductsFromCloud();
 
             const sideDrawer = document.getElementById('sideDrawer');
             const drawerContent = document.getElementById('drawerContent');
@@ -554,40 +595,33 @@
                         }
 
                         publishBtn.innerText = 'Saving...';
-                        let products = getStoredProducts();
+                        
+                        let existingProd = editId ? allProducts.find(p => String(p.id) === String(editId)) : null;
+                        
+                        const productData = {
+                            id: editId ? editId : Date.now(),
+                            title: title,
+                            price: price,
+                            desc: desc,
+                            img: imgUrl ? imgUrl : (existingProd ? existingProd.img : 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=600&q=80')
+                        };
 
-                        if(editId) {
-                            products = products.map(p => {
-                                if(p.id == editId) {
-                                    return {
-                                        ...p,
-                                        title: title,
-                                        price: price,
-                                        desc: desc,
-                                        img: imgUrl ? imgUrl : p.img
-                                    };
-                                }
-                                return p;
-                            });
-                            let success = saveStoredProducts(products);
-                            if(success) alert('Post kamyabi se update ho gayi hai!');
+                        const success = await saveProductToCloud(productData, !!editId);
+
+                        if(success || API_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+                            if(editId) {
+                                allProducts = allProducts.map(p => String(p.id) === String(editId) ? productData : p);
+                                alert('Post kamyabi se update ho gayi hai!');
+                            } else {
+                                allProducts.unshift(productData);
+                                alert('Aapka naya chappal design kamyabi se publish ho gaya hai!');
+                            }
+                            renderProducts();
+                            renderAdminList();
+                            resetAdminForm();
                         } else {
-                            const fallbackImg = 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=600&q=80';
-                            const newProduct = {
-                                id: Date.now(),
-                                title: title,
-                                price: price,
-                                desc: desc,
-                                img: imgUrl ? imgUrl : fallbackImg
-                            };
-                            products.unshift(newProduct);
-                            let success = saveStoredProducts(products);
-                            if(success) alert('Aapka naya chappal design kamyabi se publish ho gaya hai!');
+                            alert('Save karne mein masla hua.');
                         }
-
-                        renderProducts();
-                        renderAdminList();
-                        resetAdminForm();
                     } catch (error) {
                         alert('Kuch masla ho gaya hai. Dobara koshish karein.');
                     } finally {
@@ -599,8 +633,7 @@
         });
 
         function openDetailsById(id) {
-            const products = getStoredProducts();
-            const p = products.find(item => item.id === id);
+            const p = allProducts.find(item => String(item.id) === String(id));
             if(!p) return;
 
             document.getElementById('modalTitle').innerText = p.title || 'Untitled';

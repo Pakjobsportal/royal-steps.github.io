@@ -265,7 +265,6 @@
                 return defaultProducts;
             } catch (e) {
                 console.error(e);
-                // Fallback to localStorage if offline
                 const localData = localStorage.getItem('royalStepsProducts');
                 if(!localData) return defaultProducts;
                 try { return JSON.parse(localData); } catch(err) { return defaultProducts; }
@@ -274,7 +273,6 @@
 
         async function saveStoredProducts(products) {
             try {
-                // Keep image sizes optimized if too large for JSONBin payload limits
                 const payload = { products: products };
                 const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
                     method: 'PUT',
@@ -598,7 +596,6 @@
                         publishBtn.disabled = false;
                     }
 
-                    // Handle Video File First if exists
                     if(videoFile) {
                         if(videoFile.size > 15 * 1024 * 1024) {
                             alert('Video ka size buhat bara hai! Baraye meharbani choti video (15MB se kam) select karein.');

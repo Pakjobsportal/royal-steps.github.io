@@ -299,12 +299,46 @@
             alert('Password kamyabi se tabdeel ho gaya hai!');
         }
 
-        // Convert image to Base64 locally inside browser (Zero CORS issues, works 100% on mobile)
-        function convertFileToBase64(file) {
+        // Compress Image and convert to small Base64 string for JSONBin safety
+        function compressAndResizeImage(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
+                reader.onload = event => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        // Max width/height limit to keep size small
+                        const MAX_WIDTH = 600;
+                        const MAX_HEIGHT = 600;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Compress to JPEG with 0.7 quality to reduce string size
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        resolve(dataUrl);
+                    };
+                    img.onerror = error => reject(error);
+                };
                 reader.onerror = error => reject(error);
             });
         }
@@ -559,8 +593,8 @@
 
                         if(imgFile) {
                             publishBtn.innerText = 'Compressing Image...';
-                            // Convert image to local compressed base64 string (bypasses CORS restrictions completely)
-                            imgUrl = await convertFileToBase64(imgFile);
+                            // Automatically resize and compress image to prevent JSONBin limits
+                            imgUrl = await compressAndResizeImage(imgFile);
                         }
 
                         publishBtn.innerText = 'Saving to Database...';

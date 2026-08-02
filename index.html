@@ -152,7 +152,19 @@
             <div id="uploadView" class="hidden">
                 <div class="flex justify-between items-center mb-4 border-b pb-2">
                     <h3 id="adminFormTitle" class="heading-font text-xl font-bold text-amber-900">Upload New Post</h3>
-                    <button id="showPassChangeBtn" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded transition font-medium">Change Password</button>
+                    <div class="flex gap-2">
+                        <button onclick="toggleConfigBox()" class="text-xs bg-amber-100 hover:bg-amber-200 text-amber-900 px-2 py-1 rounded transition font-medium"><i class="fa-solid fa-key mr-1"></i> GitHub Setup</button>
+                        <button id="showPassChangeBtn" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded transition font-medium">Password</button>
+                    </div>
+                </div>
+
+                <!-- GitHub API Config Box -->
+                <div id="configBox" class="hidden bg-blue-50 p-3 rounded-lg border border-blue-200 mb-4 text-xs">
+                    <h4 class="font-bold text-blue-900 mb-1">GitHub Auto-Sync Setup (One-time)</h4>
+                    <p class="text-gray-600 mb-2">Enter your GitHub Personal Access Token (PAT) and repository path so posts auto-sync without file downloads.</p>
+                    <input type="text" id="gitRepoInput" placeholder="Repo path (e.g. pakjobsportal/royal-steps.github.io)" class="w-full border border-blue-300 rounded px-2 py-1.5 mb-2 bg-white">
+                    <input type="password" id="gitTokenInput" placeholder="GitHub Personal Access Token (ghp_...)" class="w-full border border-blue-300 rounded px-2 py-1.5 mb-2 bg-white">
+                    <button onclick="saveGitHubSettings()" class="bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 transition font-medium">Save Settings</button>
                 </div>
 
                 <div id="passChangeBox" class="hidden bg-amber-50 p-3 rounded-lg border border-amber-200 mb-4">
@@ -217,9 +229,8 @@
 
     <!-- JavaScript Script -->
     <script>
-        // GitHub JSON Data Backend System
         let allProducts = [];
-        const JSON_FILE_URL = 'products.json?' + new Date().getTime(); // Prevent caching
+        const JSON_FILE_URL = 'products.json?' + new Date().getTime();
 
         async function loadProductsFromCloud() {
             try {
@@ -252,6 +263,90 @@
             document.getElementById('newAdminPass').value = '';
             document.getElementById('passChangeBox').classList.add('hidden');
             alert('Password kamyabi se tabdeel ho gaya hai!');
+        }
+
+        function toggleConfigBox() {
+            const box = document.getElementById('configBox');
+            box.classList.toggle('hidden');
+            if(!box.classList.contains('hidden')) {
+                document.getElementById('gitRepoInput').value = localStorage.getItem('royalStepsRepo') || '';
+                document.getElementById('gitTokenInput').value = localStorage.getItem('royalStepsToken') || '';
+            }
+        }
+
+        function saveGitHubSettings() {
+            const repo = document.getElementById('gitRepoInput').value.trim();
+            const token = document.getElementById('gitTokenInput').value.trim();
+            if(!repo || !token) {
+                alert('Dono fields (Repo aur Token) bharna lazmi hain!');
+                return;
+            }
+            localStorage.setItem('royalStepsRepo', repo);
+            localStorage.setItem('royalStepsToken', token);
+            document.getElementById('configBox').classList.add('hidden');
+            alert('GitHub settings save ho gayi hain!');
+        }
+
+        // Automatic GitHub Commit API
+        async function commitJsonToGitHub(updatedDataArray, successCallback) {
+            const repo = localStorage.getItem('royalStepsRepo');
+            const token = localStorage.getItem('royalStepsToken');
+
+            if(!repo || !token) {
+                // Fallback to manual download if GitHub token is not configured
+                downloadJSONFile();
+                if(successCallback) successCallback();
+                alert('GitHub Token set nahi hai, is liye file aapke mobile mein download ho gayi hai. Auto-sync ke liye "GitHub Setup" button par click karke token save karein.');
+                return;
+            }
+
+            const apiGetUrl = `https://api.github.com/repos/${repo}/contents/products.json`;
+            
+            try {
+                // 1. Get current file sha
+                let getRes = await fetch(apiGetUrl, {
+                    headers: { 'Authorization': `token ${token}` }
+                });
+                
+                let sha = '';
+                if(getRes.ok) {
+                    let fileData = await getRes.json();
+                    sha = fileData.sha;
+                }
+
+                // 2. Prepare content
+                const jsonString = JSON.stringify(updatedDataArray, null, 2);
+                const base64Content = btoa(unescape(encodeURIComponent(jsonString)));
+
+                // 3. Put / Update file
+                let putRes = await fetch(apiGetUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: "Update products.json via Royal Steps Admin Panel",
+                        content: base64Content,
+                        sha: sha ? sha : undefined
+                    })
+                });
+
+                if(putRes.ok) {
+                    alert('Kamyabi! Post foran GitHub par live ho gayi hai!');
+                    if(successCallback) successCallback();
+                    loadProductsFromCloud();
+                } else {
+                    let errJson = await putRes.json();
+                    alert('GitHub Sync Error: ' + (errJson.message || 'Unknown error'));
+                    downloadJSONFile();
+                    if(successCallback) successCallback();
+                }
+            } catch(err) {
+                alert('Network error during GitHub sync. File downloaded locally instead.');
+                downloadJSONFile();
+                if(successCallback) successCallback();
+            }
         }
 
         function renderProducts() {
@@ -347,7 +442,6 @@
             document.getElementById('cancelEditBtn').classList.add('hidden');
         }
 
-        // Image compressor to ensure small size
         function compressImage(file, callback) {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -395,12 +489,13 @@
 
         function deleteProduct(id) {
             if(confirm('Kya aap waqai is post ko delete karna chahte hain?')) {
-                allProducts = allProducts.filter(p => String(p.id) !== String(id));
-                downloadJSONFile();
-                renderProducts();
-                renderAdminList();
-                resetAdminForm();
-                alert('Post delete ho gayi hai! Ub nayi download hone wali "products.json" file ko dobara GitHub par upload karein taake doosron ke pas bhi update ho jaye.');
+                let updatedList = allProducts.filter(p => String(p.id) !== String(id));
+                commitJsonToGitHub(updatedList, function() {
+                    allProducts = updatedList;
+                    renderProducts();
+                    renderAdminList();
+                    resetAdminForm();
+                });
             }
         }
 
@@ -467,6 +562,7 @@
                 document.getElementById('loginView').classList.remove('hidden');
                 document.getElementById('uploadView').classList.add('hidden');
                 document.getElementById('passChangeBox').classList.add('hidden');
+                document.getElementById('configBox').classList.add('hidden');
                 document.getElementById('adminPass').value = '';
                 resetAdminForm();
             }
@@ -533,7 +629,7 @@
                     }
 
                     publishBtn.disabled = true;
-                    publishBtn.innerText = 'Processing...';
+                    publishBtn.innerText = 'Syncing with GitHub...';
 
                     const processProduct = (imgUrl) => {
                         let existingProd = editId ? allProducts.find(p => String(p.id) === String(editId)) : null;
@@ -546,23 +642,21 @@
                             img: imgUrl ? imgUrl : (existingProd ? existingProd.img : 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=600&q=80')
                         };
 
+                        let updatedList = [...allProducts];
                         if(editId) {
-                            allProducts = allProducts.map(p => String(p.id) === String(editId) ? productData : p);
+                            updatedList = updatedList.map(p => String(p.id) === String(editId) ? productData : p);
                         } else {
-                            allProducts.unshift(productData);
+                            updatedList.unshift(productData);
                         }
 
-                        // Automatically download the updated products.json file to upload to GitHub
-                        downloadJSONFile();
-
-                        renderProducts();
-                        renderAdminList();
-                        resetAdminForm();
-
-                        alert('Post save ho gayi hai! Aapke mobile mein "products.json" file download ho gayi hai. Is file ko GitHub repository mein upload kar dein taake dunya ke har mobile par live ho jaye.');
-
-                        publishBtn.innerText = 'Publish Post';
-                        publishBtn.disabled = false;
+                        commitJsonToGitHub(updatedList, function() {
+                            allProducts = updatedList;
+                            renderProducts();
+                            renderAdminList();
+                            resetAdminForm();
+                            publishBtn.innerText = 'Publish Post';
+                            publishBtn.disabled = false;
+                        });
                     };
 
                     if(imgFile) {

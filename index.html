@@ -236,6 +236,9 @@
 
     <!-- JavaScript Event Listeners & Functions -->
     <script>
+        const BIN_ID = "6a6f272af5f4af5e29e0cf49";
+        const MASTER_KEY = "$2a$10$/HSoZt.7aa4kVz85yWgjOe18IYdNcBZlKNUidl2URIoo6MEDV46Du";
+
         const defaultProducts = [
             {
                 id: 1,
@@ -247,32 +250,45 @@
             }
         ];
 
-        function getStoredProducts() {
-            const data = localStorage.getItem('royalStepsProducts');
-            if(!data) {
-                localStorage.setItem('royalStepsProducts', JSON.stringify(defaultProducts));
+        async function getStoredProducts() {
+            try {
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+                    headers: {
+                        'X-Master-Key': MASTER_KEY
+                    }
+                });
+                if(!response.ok) throw new Error('Failed to fetch from cloud');
+                const data = await response.json();
+                if(data && data.record && Array.isArray(data.record.products)) {
+                    return data.record.products;
+                }
                 return defaultProducts;
+            } catch (e) {
+                console.error(e);
+                // Fallback to localStorage if offline
+                const localData = localStorage.getItem('royalStepsProducts');
+                if(!localData) return defaultProducts;
+                try { return JSON.parse(localData); } catch(err) { return defaultProducts; }
             }
-            try { return JSON.parse(data); } catch (e) { return defaultProducts; }
         }
 
-        function saveStoredProducts(products) {
+        async function saveStoredProducts(products) {
             try {
-                localStorage.setItem('royalStepsProducts', JSON.stringify(products));
+                // Keep image sizes optimized if too large for JSONBin payload limits
+                const payload = { products: products };
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': MASTER_KEY
+                    },
+                    body: JSON.stringify(payload)
+                });
+                if(!response.ok) throw new Error('Failed to update cloud database');
                 return true;
             } catch (e) {
-                try {
-                    const lightweight = products.map(p => ({
-                        ...p,
-                        img: p.img && p.img.length > 200 ? 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=600&q=80' : p.img,
-                        video: ''
-                    }));
-                    localStorage.setItem('royalStepsProducts', JSON.stringify(lightweight));
-                    return true;
-                } catch (err) {
-                    alert('Storage memory full ho chuki hai! Kuch purani posts delete kar dein.');
-                    return false;
-                }
+                alert('Cloud par data save karne mein masla hua. Internet connection check karein.');
+                return false;
             }
         }
 
@@ -292,10 +308,17 @@
             alert('Password kamyabi se tabdeel ho gaya hai!');
         }
 
-        function renderProducts() {
+        async function renderProducts() {
             const grid = document.getElementById('productGrid');
-            const products = getStoredProducts();
+            grid.innerHTML = '<p class="text-xs text-gray-500 col-span-full text-center py-4"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Loading collection...</p>';
+            
+            const products = await getStoredProducts();
             grid.innerHTML = '';
+
+            if(!products || products.length === 0) {
+                grid.innerHTML = '<p class="text-xs text-gray-500 col-span-full text-center py-4">No products found.</p>';
+                return;
+            }
 
             products.forEach(p => {
                 let badgeText = p.video ? 'Video Post' : 'Featured';
@@ -325,12 +348,14 @@
             });
         }
 
-        function renderAdminList() {
+        async function renderAdminList() {
             const listContainer = document.getElementById('adminPostsList');
-            const products = getStoredProducts();
+            listContainer.innerHTML = '<p class="text-xs text-gray-500">Loading posts...</p>';
+            
+            const products = await getStoredProducts();
             listContainer.innerHTML = '';
 
-            if(products.length === 0) {
+            if(!products || products.length === 0) {
                 listContainer.innerHTML = '<p class="text-xs text-gray-500">No posts available.</p>';
                 return;
             }
@@ -356,8 +381,8 @@
             });
         }
 
-        function editProduct(id) {
-            const products = getStoredProducts();
+        async function editProduct(id) {
+            const products = await getStoredProducts();
             const p = products.find(item => item.id === id);
             if(!p) return;
 
@@ -386,15 +411,17 @@
             document.getElementById('cancelEditBtn').classList.add('hidden');
         }
 
-        function deleteProduct(id) {
+        async function deleteProduct(id) {
             if(confirm('Kya aap waqai is post ko delete karna chahte hain?')) {
-                let products = getStoredProducts();
+                let products = await getStoredProducts();
                 products = products.filter(p => p.id !== id);
-                saveStoredProducts(products);
-                renderProducts();
-                renderAdminList();
-                resetAdminForm();
-                alert('Post kamyabi se delete ho gayi hai!');
+                let success = await saveStoredProducts(products);
+                if(success) {
+                    renderProducts();
+                    renderAdminList();
+                    resetAdminForm();
+                    alert('Post kamyabi se delete ho gayi hai!');
+                }
             }
         }
 
@@ -514,7 +541,7 @@
 
             const publishBtn = document.getElementById('publishBtn');
             if(publishBtn) {
-                publishBtn.addEventListener('click', function() {
+                publishBtn.addEventListener('click', async function() {
                     const editId = document.getElementById('editPostId').value;
                     const title = document.getElementById('newTitle').value.trim();
                     const price = document.getElementById('newPrice').value.trim();
@@ -527,9 +554,12 @@
                         return;
                     }
 
-                    let products = getStoredProducts();
+                    publishBtn.innerText = 'Publishing...';
+                    publishBtn.disabled = true;
 
-                    function processFiles(imgData, videoData) {
+                    let products = await getStoredProducts();
+
+                    async function processFiles(imgData, videoData) {
                         if(editId) {
                             products = products.map(p => {
                                 if(p.id == editId) {
@@ -544,8 +574,8 @@
                                 }
                                 return p;
                             });
-                            saveStoredProducts(products);
-                            alert('Post kamyabi se update ho gayi hai!');
+                            let success = await saveStoredProducts(products);
+                            if(success) alert('Post kamyabi se update ho gayi hai!');
                         } else {
                             const fallbackImg = 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=600&q=80';
                             const newProduct = {
@@ -557,19 +587,23 @@
                                 video: videoData ? videoData : ''
                             };
                             products.unshift(newProduct);
-                            saveStoredProducts(products);
-                            alert('Aapka naya chappal design kamyabi se publish ho gaya hai!');
+                            let success = await saveStoredProducts(products);
+                            if(success) alert('Aapka naya chappal design kamyabi se publish ho gaya hai!');
                         }
 
                         renderProducts();
                         renderAdminList();
                         resetAdminForm();
+                        publishBtn.innerText = 'Publish Post';
+                        publishBtn.disabled = false;
                     }
 
                     // Handle Video File First if exists
                     if(videoFile) {
                         if(videoFile.size > 15 * 1024 * 1024) {
                             alert('Video ka size buhat bara hai! Baraye meharbani choti video (15MB se kam) select karein.');
+                            publishBtn.innerText = 'Publish Post';
+                            publishBtn.disabled = false;
                             return;
                         }
                         let vReader = new FileReader();
@@ -617,8 +651,8 @@
             }
         });
 
-        function openDetailsById(id) {
-            const products = getStoredProducts();
+        async function openDetailsById(id) {
+            const products = await getStoredProducts();
             const p = products.find(item => item.id === id);
             if(!p) return;
 

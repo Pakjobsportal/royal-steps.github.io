@@ -586,7 +586,7 @@
             let rawDesc = p.desc || "";
             let formattedDescHTML = "";
             
-            if(rawDesc.txt !== "") {
+            if(rawDesc !== "") {
                 const lines = rawDesc.split('\n');
                 lines.forEach(line => {
                     if(line.includes(':')) {

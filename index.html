@@ -622,8 +622,8 @@
                                 img.onload = function() {
                                     let canvas = document.createElement('canvas');
                                     let ctx = canvas.getContext('2d');
-                                    let MAX_WIDTH = 500;
-                                    let MAX_HEIGHT = 500;
+                                    let MAX_WIDTH = 350;
+                                    let MAX_HEIGHT = 350;
                                     let width = img.width;
                                     let height = img.height;
 
@@ -635,7 +635,7 @@
                                     canvas.width = width;
                                     canvas.height = height;
                                     ctx.drawImage(img, 0, 0, width, height);
-                                    let compressedData = canvas.toDataURL('image/jpeg', 0.6);
+                                    let compressedData = canvas.toDataURL('image/jpeg', 0.4);
                                     processFiles(compressedData, processedVideo);
                                 };
                             };

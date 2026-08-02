@@ -15,7 +15,7 @@
 </head>
 <body id="mainBody" class="bg-gray-50 text-gray-800">
 
-    <!-- Top Bar / Quick Contact -->
+    <!-- Top Bar -->
     <div class="bg-amber-900 text-amber-100 text-xs py-2 px-4 flex justify-between items-center">
         <span><i class="fa-solid fa-crown text-amber-400 mr-1"></i> Royal Steps Arabic Shoes - Wholesale Factory</span>
         <div class="flex gap-4">
@@ -39,7 +39,6 @@
                     </div>
                 </div>
             </div>
-            
             <div class="flex items-center space-x-2">
                 <button id="adminBtn" class="bg-amber-100 text-amber-900 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-amber-200 transition">
                     <i class="fa-solid fa-lock mr-1"></i> Admin Login
@@ -59,12 +58,10 @@
                     </div>
                     <button id="closeMenuBtn" class="text-gray-500 hover:text-gray-800 text-lg"><i class="fa-solid fa-xmark"></i></button>
                 </div>
-
                 <nav class="space-y-3">
                     <a href="#" class="close-link flex items-center space-x-3 text-gray-700 hover:text-amber-900 hover:bg-amber-50 p-2.5 rounded-lg text-sm font-medium transition">
                         <i class="fa-solid fa-house w-5 text-amber-900"></i> <span>Home Collection</span>
                     </a>
-                    
                     <button id="darkModeToggle" class="w-full flex items-center justify-between text-gray-700 hover:text-amber-900 hover:bg-amber-50 p-2.5 rounded-lg text-sm font-medium transition text-left">
                         <div class="flex items-center space-x-3">
                             <i class="fa-solid fa-moon w-5 text-amber-900"></i>
@@ -72,21 +69,14 @@
                         </div>
                         <span id="modeText" class="text-xs bg-amber-100 text-amber-900 px-2 py-0.5 rounded">Light</span>
                     </button>
-
                     <a href="https://wa.me/923018573609?text=Assalam-o-Alaikum,+Mujhe+Wholesale+rate+par+chappal+chahiye" target="_blank" class="flex items-center space-x-3 text-gray-700 hover:text-amber-900 hover:bg-amber-50 p-2.5 rounded-lg text-sm font-medium transition">
                         <i class="fa-solid fa-boxes-stacked w-5 text-amber-900"></i> <span>Wholesale Inquiry</span>
                     </a>
-                    
-                    <a href="https://wa.me/923106144478?text=Assalam-o-Alaikum,+Factory+Address+ki+maloomat+chahiye" target="_blank" class="flex items-center space-x-3 text-gray-700 hover:text-amber-900 hover:bg-amber-50 p-2.5 rounded-lg text-sm font-medium transition">
-                        <i class="fa-solid fa-location-dot w-5 text-amber-900"></i> <span>Factory Location</span>
-                    </a>
-                    
                     <a href="#" id="menuAdminBtn" class="flex items-center space-x-3 text-gray-700 hover:text-amber-900 hover:bg-amber-50 p-2.5 rounded-lg text-sm font-medium transition">
                         <i class="fa-solid fa-upload w-5 text-amber-900"></i> <span>Upload & Manage (Admin)</span>
                     </a>
                 </nav>
             </div>
-
             <div class="border-t pt-4 mt-4 text-center bg-amber-50 p-3 rounded-xl border border-amber-200">
                 <p class="text-[11px] text-gray-600 mb-1 font-semibold">Web Developer</p>
                 <button id="menuDevBtn" class="w-full bg-amber-900 text-white py-2 rounded-lg text-xs font-bold hover:bg-amber-800 transition flex items-center justify-center shadow-sm">
@@ -119,11 +109,6 @@
             <span class="text-xs bg-amber-100 text-amber-900 px-3 py-1 rounded-full font-medium">Factory Direct Prices</span>
         </div>
 
-        <div id="loadingIndicator" class="text-center py-10">
-            <i class="fa-solid fa-spinner fa-spin text-3xl text-amber-900 mb-2"></i>
-            <p class="text-xs text-gray-500">Loading products from cloud...</p>
-        </div>
-
         <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             <!-- Dynamic products load here -->
         </div>
@@ -133,16 +118,13 @@
     <div id="detailModal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl relative text-gray-800">
             <button id="closeDetailModal" class="absolute top-3 right-3 bg-gray-100 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-200 transition z-10"><i class="fa-solid fa-xmark"></i></button>
-            
-            <div id="modalMediaContainer" class="h-64 bg-black flex items-center justify-center">
+            <div class="h-64 bg-black flex items-center justify-center">
                 <img id="modalImg" src="" class="w-full h-full object-cover">
             </div>
-
             <div class="p-6 max-h-[50vh] overflow-y-auto">
                 <h3 id="modalTitle" class="heading-font text-2xl font-bold mb-1"></h3>
                 <p id="modalPrice" class="text-amber-900 font-bold text-lg mb-3"></p>
                 <div id="modalDesc" class="text-gray-600 text-sm mb-6 leading-relaxed space-y-2"></div>
-                
                 <div class="grid grid-cols-2 gap-3">
                     <a href="https://wa.me/923018573609" target="_blank" class="bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg text-center text-sm font-medium transition flex items-center justify-center">
                         <i class="fa-brands fa-whatsapp mr-1.5"></i> Order WhatsApp
@@ -185,7 +167,7 @@
                     <input type="text" id="newPrice" placeholder="Price (Optional - e.g. Rs. 4,800)" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
                     
                     <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Select Image from Gallery (Optional):</label>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Select Image from Gallery:</label>
                         <input type="file" id="newImgFile" accept="image/*" class="w-full border border-gray-300 rounded-lg p-1.5 text-xs bg-gray-50">
                     </div>
 
@@ -215,7 +197,7 @@
             <h3 class="heading-font text-xl font-bold mb-1">PrinCce Jutt</h3>
             <p class="text-xs text-amber-900 font-semibold mb-3">Professional Web Developer</p>
             <p class="text-gray-600 text-xs mb-5 leading-relaxed">
-                Kya aapko bhi apni ya apne business کی professional website banwani hai? Hum buhat hi kam rates mein high-class websites bana kar dete hain!
+                Kya aapko bhi apni ya apne business ki professional website banwani hai? Hum buhat hi kam rates mein high-class websites bana kar dete hain!
             </p>
             <a href="https://wa.me/923039152778?text=Assalam-o-Alaikum!+Mujhe+apni+website+banwani+hai,+details+batayein." target="_blank" class="w-full bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg text-sm font-medium flex items-center justify-center transition">
                 <i class="fa-brands fa-whatsapp text-lg mr-2"></i> Contact Developer on WhatsApp
@@ -233,54 +215,13 @@
         </div>
     </footer>
 
-    <!-- JavaScript Event Listeners & Functions -->
+    <!-- JavaScript Script -->
     <script>
-        // Google Apps Script Web App URL (Updated)
-        const API_URL = "https://script.google.com/macros/s/AKfycbw0m5ASJKvli06i1BLrWo-fTsfzcL0J_ApPryd4dQ05pIVc09ULSyih6JRSPGTFg3Ai/exec";
+        // Local Storage-based system (Supports 100+ items locally)
+        let allProducts = JSON.parse(localStorage.getItem('royalStepsProducts') || '[]');
 
-        let allProducts = [];
-
-        async function fetchProductsFromCloud() {
-            const loading = document.getElementById('loadingIndicator');
-            const grid = document.getElementById('productGrid');
-
-            try {
-                const response = await fetch(API_URL);
-                const data = await response.json();
-                allProducts = Array.isArray(data) ? data : [];
-            } catch (e) {
-                console.error("Error fetching data", e);
-                allProducts = [];
-            } finally {
-                if(loading) loading.style.display = 'none';
-                renderProducts();
-            }
-        }
-
-        async function saveProductToCloud(productData, isEdit = false) {
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(productData)
-                });
-                const res = await response.json();
-                return res.success;
-            } catch (e) {
-                alert('Cloud par data save karne mein masla hua.');
-                return false;
-            }
-        }
-
-        async function deleteProductFromCloud(id) {
-            try {
-                const response = await fetch(API_URL + "?action=delete&id=" + id, {
-                    method: 'GET'
-                });
-                const res = await response.json();
-                return res.success;
-            } catch (e) {
-                return false;
-            }
+        function saveProductsToStorage() {
+            localStorage.setItem('royalStepsProducts', JSON.stringify(allProducts));
         }
 
         function getAdminPassword() {
@@ -299,24 +240,12 @@
             alert('Password kamyabi se tabdeel ho gaya hai!');
         }
 
-        async function uploadImageToCloud(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => {
-                    alert('Image load karne mein masla hua.');
-                    reject(error);
-                };
-            });
-        }
-
         function renderProducts() {
             const grid = document.getElementById('productGrid');
             grid.innerHTML = '';
 
             if(!allProducts || allProducts.length === 0) {
-                grid.innerHTML = '<p class="text-xs text-gray-500 col-span-full text-center py-4">No products found.</p>';
+                grid.innerHTML = '<p class="text-xs text-gray-500 col-span-full text-center py-4">No products found. Upload from admin panel.</p>';
                 return;
             }
 
@@ -404,23 +333,19 @@
             document.getElementById('cancelEditBtn').classList.add('hidden');
         }
 
-        async function deleteProduct(id) {
+        function deleteProduct(id) {
             if(confirm('Kya aap waqai is post ko delete karna chahte hain?')) {
-                const success = await deleteProductFromCloud(id);
-                if(success) {
-                    allProducts = allProducts.filter(p => String(p.id) !== String(id));
-                    renderProducts();
-                    renderAdminList();
-                    resetAdminForm();
-                    alert('Post kamyabi se delete ho gayi hai!');
-                } else {
-                    alert('Delete karne mein masla hua.');
-                }
+                allProducts = allProducts.filter(p => String(p.id) !== String(id));
+                saveProductsToStorage();
+                renderProducts();
+                renderAdminList();
+                resetAdminForm();
+                alert('Post kamyabi se delete ho gayi hai!');
             }
         }
 
         document.addEventListener("DOMContentLoaded", function() {
-            fetchProductsFromCloud();
+            renderProducts();
 
             const sideDrawer = document.getElementById('sideDrawer');
             const drawerContent = document.getElementById('drawerContent');
@@ -535,7 +460,7 @@
 
             const publishBtn = document.getElementById('publishBtn');
             if(publishBtn) {
-                publishBtn.addEventListener('click', async function() {
+                publishBtn.addEventListener('click', function() {
                     const editId = document.getElementById('editPostId').value;
                     const title = document.getElementById('newTitle').value.trim();
                     const price = document.getElementById('newPrice').value.trim();
@@ -550,21 +475,7 @@
                     publishBtn.disabled = true;
                     publishBtn.innerText = 'Processing...';
 
-                    try {
-                        let imgUrl = null;
-
-                        if(imgFile) {
-                            publishBtn.innerText = 'Processing Image...';
-                            imgUrl = await uploadImageToCloud(imgFile);
-                            if(!imgUrl) {
-                                publishBtn.innerText = 'Publish Post';
-                                publishBtn.disabled = false;
-                                return;
-                            }
-                        }
-
-                        publishBtn.innerText = 'Saving...';
-                        
+                    const processProduct = (imgUrl) => {
                         let existingProd = editId ? allProducts.find(p => String(p.id) === String(editId)) : null;
                         
                         const productData = {
@@ -575,27 +486,34 @@
                             img: imgUrl ? imgUrl : (existingProd ? existingProd.img : 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=600&q=80')
                         };
 
-                        const success = await saveProductToCloud(productData, !!editId);
-
-                        if(success) {
-                            if(editId) {
-                                allProducts = allProducts.map(p => String(p.id) === String(editId) ? productData : p);
-                                alert('Post kamyabi se update ho gayi hai!');
-                            } else {
-                                allProducts.unshift(productData);
-                                alert('Aapka naya chappal design kamyabi se publish ho gaya hai!');
-                            }
-                            renderProducts();
-                            renderAdminList();
-                            resetAdminForm();
+                        if(editId) {
+                            allProducts = allProducts.map(p => String(p.id) === String(editId) ? productData : p);
+                            alert('Post kamyabi se update ho gayi hai!');
                         } else {
-                            alert('Save karne mein masla hua.');
+                            allProducts.unshift(productData);
+                            alert('Aapka naya chappal design kamyabi se publish ho gaya hai!');
                         }
-                    } catch (error) {
-                        alert('Kuch masla ho gaya hai. Dobara koshish karein.');
-                    } finally {
+
+                        saveProductsToStorage();
+                        renderProducts();
+                        renderAdminList();
+                        resetAdminForm();
+
                         publishBtn.innerText = 'Publish Post';
                         publishBtn.disabled = false;
+                    };
+
+                    if(imgFile) {
+                        const reader = new FileReader();
+                        reader.readAsDataURL(imgFile);
+                        reader.onload = () => processProduct(reader.result);
+                        reader.onerror = () => {
+                            alert('Image load karne mein masla hua.');
+                            publishBtn.innerText = 'Publish Post';
+                            publishBtn.disabled = false;
+                        };
+                    } else {
+                        processProduct(null);
                     }
                 });
             }
@@ -628,10 +546,7 @@
             }
             
             document.getElementById('modalDesc').innerHTML = formattedDescHTML;
-            
-            const imgElement = document.getElementById('modalImg');
-            imgElement.src = p.img ? p.img : 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=600&q=80';
-
+            document.getElementById('modalImg').src = p.img ? p.img : 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=600&q=80';
             document.getElementById('detailModal').classList.remove('hidden');
         }
 

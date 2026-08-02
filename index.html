@@ -217,11 +217,25 @@
 
     <!-- JavaScript Script -->
     <script>
-        // Local Storage-based system (Supports 100+ items locally)
-        let allProducts = JSON.parse(localStorage.getItem('royalStepsProducts') || '[]');
+        // GitHub JSON Data Backend System
+        let allProducts = [];
+        const JSON_FILE_URL = 'products.json?' + new Date().getTime(); // Prevent caching
 
-        function saveProductsToStorage() {
-            localStorage.setItem('royalStepsProducts', JSON.stringify(allProducts));
+        async function loadProductsFromCloud() {
+            try {
+                let response = await fetch(JSON_FILE_URL);
+                if(response.ok) {
+                    allProducts = await response.json();
+                } else {
+                    allProducts = [];
+                }
+            } catch (e) {
+                allProducts = [];
+            }
+            renderProducts();
+            if(!document.getElementById('uploadView').classList.contains('hidden')) {
+                renderAdminList();
+            }
         }
 
         function getAdminPassword() {
@@ -333,19 +347,65 @@
             document.getElementById('cancelEditBtn').classList.add('hidden');
         }
 
+        // Image compressor to ensure small size
+        function compressImage(file, callback) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function (event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = function () {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 500;
+                    const MAX_HEIGHT = 500;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                    callback(dataUrl);
+                }
+            }
+        }
+
+        function downloadJSONFile() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allProducts, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "products.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
         function deleteProduct(id) {
             if(confirm('Kya aap waqai is post ko delete karna chahte hain?')) {
                 allProducts = allProducts.filter(p => String(p.id) !== String(id));
-                saveProductsToStorage();
+                downloadJSONFile();
                 renderProducts();
                 renderAdminList();
                 resetAdminForm();
-                alert('Post kamyabi se delete ho gayi hai!');
+                alert('Post delete ho gayi hai! Ub nayi download hone wali "products.json" file ko dobara GitHub par upload karein taake doosron ke pas bhi update ho jaye.');
             }
         }
 
         document.addEventListener("DOMContentLoaded", function() {
-            renderProducts();
+            loadProductsFromCloud();
 
             const sideDrawer = document.getElementById('sideDrawer');
             const drawerContent = document.getElementById('drawerContent');
@@ -488,30 +548,27 @@
 
                         if(editId) {
                             allProducts = allProducts.map(p => String(p.id) === String(editId) ? productData : p);
-                            alert('Post kamyabi se update ho gayi hai!');
                         } else {
                             allProducts.unshift(productData);
-                            alert('Aapka naya chappal design kamyabi se publish ho gaya hai!');
                         }
 
-                        saveProductsToStorage();
+                        // Automatically download the updated products.json file to upload to GitHub
+                        downloadJSONFile();
+
                         renderProducts();
                         renderAdminList();
                         resetAdminForm();
+
+                        alert('Post save ho gayi hai! Aapke mobile mein "products.json" file download ho gayi hai. Is file ko GitHub repository mein upload kar dein taake dunya ke har mobile par live ho jaye.');
 
                         publishBtn.innerText = 'Publish Post';
                         publishBtn.disabled = false;
                     };
 
                     if(imgFile) {
-                        const reader = new FileReader();
-                        reader.readAsDataURL(imgFile);
-                        reader.onload = () => processProduct(reader.result);
-                        reader.onerror = () => {
-                            alert('Image load karne mein masla hua.');
-                            publishBtn.innerText = 'Publish Post';
-                            publishBtn.disabled = false;
-                        };
+                        compressImage(imgFile, function(compressedUrl) {
+                            processProduct(compressedUrl);
+                        });
                     } else {
                         processProduct(null);
                     }
@@ -529,7 +586,7 @@
             let rawDesc = p.desc || "";
             let formattedDescHTML = "";
             
-            if(rawDesc.trim() !== "") {
+            if(rawDesc.txt !== "") {
                 const lines = rawDesc.split('\n');
                 lines.forEach(line => {
                     if(line.includes(':')) {
